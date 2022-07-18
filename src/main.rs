@@ -5,42 +5,90 @@ use rand::Rng;
 //use std::error::Error;
 use try_catch::catch;
 use io::Error;
+use std::io::Stdout;
+use terminal::{Clear, Action, Value, Retrieved, error, Terminal};
 
-pub struct cell_symbol {
-    symbol: emoji::Emoji
+
+
+
+pub struct MapGame {
+    rows : Vec<Vec<String>>
 }
 
-
-pub struct Matrix<'a> {
-    rows: [[&'a cell_symbol; 10]; 10]
+pub struct Monster {
+    hp : u8,
+    coords : (i32, i32),
+    mob_glyph : String,
+    mob_is_alive : bool
 }
 
 
 fn main() {
-    let man: cell_symbol = cell_symbol{symbol :emoji::people_and_body::person_symbol::BUST_IN_SILHOUETTE};
-    let tree: cell_symbol = cell_symbol{symbol : emoji::animals_and_nature::plant_other::DECIDUOUS_TREE};
+    //let terminal: Terminal<Stdout> = terminal::stdout();
+    //let man: cell_symbol = cell_symbol { symbol: emoji::people_and_body::person_symbol::BUST_IN_SILHOUETTE };
+    //let tree: cell_symbol = cell_symbol { symbol: emoji::animals_and_nature::plant_other::DECIDUOUS_TREE };
 
-    let mut map: Matrix = Matrix{rows : [
-        [&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree],
-        [&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree],
-        [&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree],
-        [&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree],
-        [&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree],
-        [&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree],
-        [&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree],
-        [&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree],
-        [&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree],
-        [&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree]
-    ]};
+    // Generate map
+    let mut map = MapGame{rows : Vec::new()};
+    for i in 0..11 as usize {
+        let mut row = Vec::new();
+        for j in 0..11 as usize {
+            &mut row.push(String::from(emoji::animals_and_nature::plant_other::DECIDUOUS_TREE.glyph));
+        }
+        map.rows.push(row);
+    }
 
-    /* Создание случайных координат для Главного Героя */
+    render_game(&map);
+
+}
+
+fn render_game(map :&MapGame){
+   //terminal.act(Action::ClearTerminal(Clear::All)).unwrap();
+    for row in &map.rows
+    {
+        for val in row
+        {
+            print!("{}",*val);
+        }
+        println!();
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /*
+    // let mut map: Matrix = Matrix{rows : [
+    //     [&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree],
+    //     [&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree],
+    //     [&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree],
+    //     [&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree],
+    //     [&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree],
+    //     [&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree],
+    //     [&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree],
+    //     [&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree],
+    //     [&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree],
+    //     [&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree]
+    // ]};
+
+     Создание случайных координат для Главного Героя
     let mut rng = rand::thread_rng();
     let mut coord_gg: [usize; 2] = [rng.gen_range(0..10), rng.gen_range(0..10)];
     println!("{:?}", coord_gg);
     let [x, y] = coord_gg;
     //map.rows[x][y] = &man; // Расположение Главного Героя на карте
 
-    print_map(&map, &coord_gg, &man);
+    print_map(&map, &coord_gg, &man, &terminal);
 
     while true {
         let mut motion_str = String::new();
@@ -53,7 +101,7 @@ fn main() {
             None => println!("введите")
         }
 
-        print_map(&map, &coord_gg, &man);
+        print_map(&map, &coord_gg, &man, &terminal);
     }
 
 }
@@ -72,7 +120,8 @@ fn move_gg(vecmov :(usize, char), map : &Matrix<'_>, coords_gg: &mut [usize]){
 
 }
 
-fn print_map(map : &Matrix<'_>, coords_gg :&[usize], man: &cell_symbol){
+fn print_map(map : &Matrix<'_>, coords_gg :&[usize], man: &cell_symbol, terminal :&Terminal<Stdout>){
+    terminal.act(Action::ClearTerminal(Clear::All)).unwrap();
     let mut x: usize =0;
     let mut y: usize = 0;
     //print!("{:?}",coords_gg);
@@ -92,3 +141,4 @@ fn print_map(map : &Matrix<'_>, coords_gg :&[usize], man: &cell_symbol){
         println!();
     }
 }
+*/
