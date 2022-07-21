@@ -9,4 +9,4 @@ edition = "2021"
 emoji = "0.2.1"
 rand = "0.8.5"
 try-catch = "0.2.2"
-terminal = {}
+terminal = "0.2.1"
