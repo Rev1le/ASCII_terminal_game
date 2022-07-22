@@ -9,7 +9,6 @@ use terminal::Value::TerminalSize;
 //use std::io::Stdout;
 //use terminal::{Clear, Action, Value, Retrieved, error, Terminal};
 
-
 pub struct Player {
     hp: u8,
     mana: u8,
@@ -33,6 +32,8 @@ pub struct Monster {
 fn main() {
 
     let (mut player, mut map, mut mob_vec) = generate_static_object();
+
+    render_game(&player, &map, &mob_vec); // начальное расположение карты
 
     loop {
         let mut motion_str = String::new();
@@ -112,11 +113,11 @@ fn move_gg(vecmov :(usize, char), player: &mut Player, mob_vec: &Vec<Monster>){
 
     let rus;
     match vecmov.1 {
-        'w' => rus = check_event(player, ('y', -1), &mob_vec),  //  coords_gg.1.wrapping_sub(1),
-        's' => rus = check_event(player, ('y', 1), &mob_vec),  //  coords_gg.1.wrapping_add(1),
+        'w' => rus = check_event(player, ('y', -1), &mob_vec),
+        's' => rus = check_event(player, ('y', 1), &mob_vec),
         'a' => rus = check_event(player, ('x', -1), &mob_vec),
         'd' => rus = check_event(player, ('x', 1), &mob_vec),
-        _ => print!("vfff")
+        _ => println!("Неверное напрвление движения. Введите корректные: (w - вверх, s - вниз, a - влево, d - вправо)")
     }
 }
 
@@ -157,6 +158,7 @@ fn render_game(player: &Player, map :&MapGame, mob_vec : &Vec<Monster>){
         }
     }
 
+    //Создание разграничения карты от интерфейса
     let mut sst = String::new();
     for _ in 0..12{
         sst.push_str(emoji::symbols::geometric::DIAMOND_WITH_A_DOT.glyph);
@@ -165,13 +167,16 @@ fn render_game(player: &Player, map :&MapGame, mob_vec : &Vec<Monster>){
 }
 
 
-fn check_event(player: &mut Player, move_coord :(char, i32), mobs_vec : &Vec<Monster>) -> Option<u32>{
+fn check_event(player: &mut Player, move_coord :(char, i32), mobs_vec : &Vec<Monster>) -> Option<char>{
+
+    let mut has_event = false;
 
     match move_coord.0 {
         'y' => {
             for mob in mobs_vec{
                 if player.coords.1 + move_coord.1 == mob.coords.1 && player.coords.0 == mob.coords.0{
                     println!("{} {}",player.coords.1 + move_coord.1,  mob.coords.1);
+                    has_event = true;
                 }
             }
             player.coords.1 += move_coord.1;
@@ -180,14 +185,15 @@ fn check_event(player: &mut Player, move_coord :(char, i32), mobs_vec : &Vec<Mon
             for mob in mobs_vec{
                 if player.coords.0 + move_coord.1 == mob.coords.0 && player.coords.1 == mob.coords.1 {
                     println!("{} {}",player.coords.0 + move_coord.1,  mob.coords.0);
+                    has_event = true;
                 }
             }
             player.coords.0 += move_coord.1;
         },
-        _ => print!("ddd")
+        _ => {}
     }
-
-
-
+    if has_event {
+        return Some('f') //возвращает символ 'f' - fight
+    }
     return None
 }
