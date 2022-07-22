@@ -32,18 +32,36 @@ pub struct Monster {
     mob_is_alive : bool
 }
 
-struct Test {
-    st : &str
-}
 
 fn main() {
-    let test = Test{st :"eeee"};
 
+    let (mut player, mut map, mut mob_vec) = generate_static_object();
+
+    loop {
+        let mut motion_str = String::new();
+        io::stdin().read_line(&mut motion_str).unwrap();
+        let mut split =  motion_str.char_indices();
+        //let moved_vec = split[1];
+
+        match split.next() {
+            Some(x) => move_gg(x,&mut player.coords),
+            None => println!("введите")
+        }
+
+        render_game(&player, &map, &mob_vec);
+    }
+
+    //
+    let mut s = String::new();
+    io::stdin().read_line(&mut s).unwrap();
+}
+
+fn generate_static_object() -> (Player, MapGame, Vec<Monster>){
     let mut rng = rand::thread_rng();
     //let terminal: Terminal<Stdout> = terminal::stdout();
 
     //Create Player
-    let player = Player{
+    let mut player = Player{
         hp: 100,
         mana: 100,
         coords: (
@@ -54,40 +72,57 @@ fn main() {
             .glyph)
     };
 
-
     // Generate map
+    // генерация строк не нужна, есть .clone()
     let mut map = MapGame{rows : Vec::new()};
-    for _i in 0..11 as usize {
-        let mut row = Vec::new();
-        for _j in 0..11 as usize {
-            let _ = &mut row.push(
-                String::from(
-                    emoji::animals_and_nature::plant_other::DECIDUOUS_TREE
-                        .glyph
-                )
-            );
-        }
-        map.rows.push(row);
+
+    let mut row = Vec::new();
+    for _j in 0..11 as usize {
+        let _ = &mut row.push(
+            String::from(
+                emoji::animals_and_nature::plant_other::DECIDUOUS_TREE
+                    .glyph)
+        );
     }
 
+    for _i in 0..11 as usize {
+        let copy_row = row.clone();
+        map.rows.push(copy_row);
+
+
+    }
+
+    //Generate mob in Vector
     let mut mob_vec: Vec<Monster> = Vec::new();
     for _ in 0..3 {
-        let monster = Monster{
+        let mut monster = Monster{
             hp :100, coords : (
                 rng.gen_range(0..10),
-                rng.gen_range(0..10)
-            ),
+                rng.gen_range(0..10)),
             mob_glyph : emoji::animals_and_nature::animal_mammal::BEAR
                 .glyph
                 .to_string(),
             mob_is_alive : true};
         mob_vec.push(monster);
     }
-    //println!("{:?}", mob_vec);
 
-    render_game(&player, &map, &mob_vec);
-    let mut s = String::new();
-    io::stdin().read_line(&mut s).unwrap();
+    //return all value
+    return (player, map, mob_vec)
+}
+
+
+fn move_gg(vecmov :(usize, char), coords_gg: &mut (i32, i32)){
+    //println!("{vecmov:?}");
+
+    match vecmov.1 {
+        'w' => coords_gg.1 = coords_gg.1.wrapping_sub(1),
+        's' => coords_gg.1 = coords_gg.1.wrapping_add(1),
+        'a' => coords_gg.0 = coords_gg.0.wrapping_sub(1),
+        'd' => coords_gg.0 = coords_gg.0.wrapping_add(1),
+        _ => print!("vfff")
+    }
+    //println!("{:?}",coords_gg);
+
 }
 
 fn render_game(player: &Player, map :&MapGame, mob_vec : &Vec<Monster>){
@@ -101,18 +136,18 @@ fn render_game(player: &Player, map :&MapGame, mob_vec : &Vec<Monster>){
             {
                 let mut free_cell = true;
 
-                //replaced Mobs
-                for mob in mob_vec.iter() {
-                    if mob.coords == (x, y) {
-                        print!("{}", mob.mob_glyph);
-                        free_cell = false;
-                    }
-                }
-
                 // replaced Player
                 if player.coords == (x, y) {
                     print!("{}", player.emoji_glyph);
                     free_cell = false;
+                }
+
+                //replaced Mobs
+                for mob in mob_vec.iter() {
+                    if mob.coords == (x, y) && free_cell {
+                        print!("{}", mob.mob_glyph);
+                        free_cell = false;
+                    }
                 }
 
                 // replaced Tree
@@ -126,8 +161,9 @@ fn render_game(player: &Player, map :&MapGame, mob_vec : &Vec<Monster>){
             println!("{}", emoji::symbols::geometric::DIAMOND_WITH_A_DOT.glyph);
         }
     }
+
     let mut sst = String::new();
-    for i in 0..12{
+    for _ in 0..12{
         sst.push_str(emoji::symbols::geometric::DIAMOND_WITH_A_DOT.glyph);
     }
     println!("{}", sst)
@@ -147,18 +183,6 @@ fn render_game(player: &Player, map :&MapGame, mob_vec : &Vec<Monster>){
 
 
     /*
-    // let mut map: Matrix = Matrix{rows : [
-    //     [&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree],
-    //     [&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree],
-    //     [&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree],
-    //     [&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree],
-    //     [&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree],
-    //     [&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree],
-    //     [&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree],
-    //     [&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree],
-    //     [&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree],
-    //     [&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree,&tree]
-    // ]};
 
      Создание случайных координат для Главного Героя
     let mut rng = rand::thread_rng();
