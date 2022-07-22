@@ -4,7 +4,7 @@ use emoji;
 use rand::Rng;
 use terminal::Value::TerminalSize;
 //use try_catch::catch;
-//use io::Error;
+
 
 //use std::io::Stdout;
 //use terminal::{Clear, Action, Value, Retrieved, error, Terminal};
@@ -18,12 +18,9 @@ pub struct Player {
     emoji_glyph: String
 }
 
-pub struct InvItem{
-}
+pub struct InvItem{}
 
-pub struct MapGame {
-    rows : Vec<Vec<String>>
-}
+pub struct MapGame { rows : Vec<Vec<String>> }
 
 pub struct Monster {
     hp : u8,
@@ -44,7 +41,7 @@ fn main() {
         //let moved_vec = split[1];
 
         match split.next() {
-            Some(x) => move_gg(x,&mut player.coords),
+            Some(x) => move_gg(x, &mut player, &mob_vec), //Движение персонаджа по карте и регистрация событий
             None => println!("введите")
         }
 
@@ -54,6 +51,8 @@ fn main() {
     //
     let mut s = String::new();
     io::stdin().read_line(&mut s).unwrap();
+
+
 }
 
 fn generate_static_object() -> (Player, MapGame, Vec<Monster>){
@@ -65,8 +64,8 @@ fn generate_static_object() -> (Player, MapGame, Vec<Monster>){
         hp: 100,
         mana: 100,
         coords: (
-            rng.gen_range(0..10),
-            rng.gen_range(0..10)),
+            rng.gen_range(0..10), //  x
+            rng.gen_range(0..10)),//  y
         inventary: Vec::new(),
         emoji_glyph: String::from(emoji::people_and_body::person_symbol::BUST_IN_SILHOUETTE
             .glyph)
@@ -88,8 +87,6 @@ fn generate_static_object() -> (Player, MapGame, Vec<Monster>){
     for _i in 0..11 as usize {
         let copy_row = row.clone();
         map.rows.push(copy_row);
-
-
     }
 
     //Generate mob in Vector
@@ -111,18 +108,16 @@ fn generate_static_object() -> (Player, MapGame, Vec<Monster>){
 }
 
 
-fn move_gg(vecmov :(usize, char), coords_gg: &mut (i32, i32)){
-    //println!("{vecmov:?}");
+fn move_gg(vecmov :(usize, char), player: &mut Player, mob_vec: &Vec<Monster>){
 
+    let rus;
     match vecmov.1 {
-        'w' => coords_gg.1 = coords_gg.1.wrapping_sub(1),
-        's' => coords_gg.1 = coords_gg.1.wrapping_add(1),
-        'a' => coords_gg.0 = coords_gg.0.wrapping_sub(1),
-        'd' => coords_gg.0 = coords_gg.0.wrapping_add(1),
+        'w' => rus = check_event(player, ('y', -1), &mob_vec),  //  coords_gg.1.wrapping_sub(1),
+        's' => rus = check_event(player, ('y', 1), &mob_vec),  //  coords_gg.1.wrapping_add(1),
+        'a' => rus = check_event(player, ('x', -1), &mob_vec),
+        'd' => rus = check_event(player, ('x', 1), &mob_vec),
         _ => print!("vfff")
     }
-    //println!("{:?}",coords_gg);
-
 }
 
 fn render_game(player: &Player, map :&MapGame, mob_vec : &Vec<Monster>){
@@ -170,78 +165,29 @@ fn render_game(player: &Player, map :&MapGame, mob_vec : &Vec<Monster>){
 }
 
 
+fn check_event(player: &mut Player, move_coord :(char, i32), mobs_vec : &Vec<Monster>) -> Option<u32>{
 
-
-
-
-
-
-
-
-
-
-
-
-    /*
-
-     Создание случайных координат для Главного Героя
-    let mut rng = rand::thread_rng();
-    let mut coord_gg: [usize; 2] = [rng.gen_range(0..10), rng.gen_range(0..10)];
-    println!("{:?}", coord_gg);
-    let [x, y] = coord_gg;
-    //map.rows[x][y] = &man; // Расположение Главного Героя на карте
-
-    print_map(&map, &coord_gg, &man, &terminal);
-
-    while true {
-        let mut motion_str = String::new();
-        io::stdin().read_line(&mut motion_str).unwrap();
-        let mut split =  motion_str.char_indices();
-        //let moved_vec = split[1];
-
-        match split.next() {
-            Some(x) => move_gg(x, &map, &mut coord_gg),
-            None => println!("введите")
-        }
-
-        print_map(&map, &coord_gg, &man, &terminal);
-    }
-
-}
-
-fn move_gg(vecmov :(usize, char), map : &Matrix<'_>, coords_gg: &mut [usize]){
-    //println!("{vecmov:?}");
-
-    match vecmov.1 {
-        'w' => coords_gg[1] = coords_gg[1].wrapping_sub(1),
-        's' => coords_gg[1] = coords_gg[1].wrapping_add(1),
-        'a' => coords_gg[0] = coords_gg[0].wrapping_sub(1),
-        'd' => coords_gg[0] = coords_gg[0].wrapping_add(1),
-        _ => print!("vfff")
-    }
-    //println!("{:?}",coords_gg);
-
-}
-
-fn print_map(map : &Matrix<'_>, coords_gg :&[usize], man: &cell_symbol, terminal :&Terminal<Stdout>){
-    terminal.act(Action::ClearTerminal(Clear::All)).unwrap();
-    let mut x: usize =0;
-    let mut y: usize = 0;
-    //print!("{:?}",coords_gg);
-    for row in map.rows {
-        for val in row {
-            if [x, y] == coords_gg {
-                print!("{}",man.symbol.glyph);
+    match move_coord.0 {
+        'y' => {
+            for mob in mobs_vec{
+                if player.coords.1 + move_coord.1 == mob.coords.1 && player.coords.0 == mob.coords.0{
+                    println!("{} {}",player.coords.1 + move_coord.1,  mob.coords.1);
+                }
             }
-            else {
-                //print!("{:?}",[x,y]);
-                print!("{}",val.symbol.glyph);
+            player.coords.1 += move_coord.1;
+        },
+        'x' => {
+            for mob in mobs_vec{
+                if player.coords.0 + move_coord.1 == mob.coords.0 && player.coords.1 == mob.coords.1 {
+                    println!("{} {}",player.coords.0 + move_coord.1,  mob.coords.0);
+                }
             }
-            x+=1;
-        }
-        x = 0;
-        y+=1;
-        println!();
+            player.coords.0 += move_coord.1;
+        },
+        _ => print!("ddd")
     }
+
+
+
+    return None
 }
-*/
