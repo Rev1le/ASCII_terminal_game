@@ -10,7 +10,7 @@ use terminal::Value::TerminalSize;
 //use terminal::{Clear, Action, Value, Retrieved, error, Terminal};
 
 pub struct Player {
-    hp: u8,
+    hp: i16,
     mana: u8,
     coords: (i32, i32),
     inventary: Vec<InvItem>,
@@ -21,11 +21,24 @@ pub struct InvItem{}
 
 pub struct MapGame { rows : Vec<Vec<String>> }
 
+#[derive(Clone)]
 pub struct Monster {
-    hp : u8,
+    id : i32,
+    hp : i16,
     coords : (i32, i32),
     mob_glyph : String,
     mob_is_alive : bool
+}
+
+
+impl Monster {
+    fn loss_of_hp(&mut self, damage :i16) -> bool{
+        self.hp -= damage;
+        if self.hp <= 0 {
+            return true;
+        }
+        false
+    }
 }
 
 
@@ -36,24 +49,19 @@ fn main() {
     render_game(&player, &map, &mob_vec); // начальное расположение карты
 
     loop {
+        //Получение символов из строки ввода направления движения
         let mut motion_str = String::new();
+        print!("Введите комманду: ");
         io::stdin().read_line(&mut motion_str).unwrap();
         let mut split =  motion_str.char_indices();
-        //let moved_vec = split[1];
 
+        // Добавитть loop, для анализа каддого символа .next()
         match split.next() {
-            Some(x) => move_gg(x, &mut player, &mob_vec), //Движение персонаджа по карте и регистрация событий
-            None => println!("введите")
+            Some(x) => move_gg(x, &mut player, &mut mob_vec), //Движение персонаджа по карте и регистрация событий
+            None => println!("Введите команду!")
         }
-
         render_game(&player, &map, &mob_vec);
     }
-
-    //
-    let mut s = String::new();
-    io::stdin().read_line(&mut s).unwrap();
-
-
 }
 
 fn generate_static_object() -> (Player, MapGame, Vec<Monster>){
@@ -77,7 +85,7 @@ fn generate_static_object() -> (Player, MapGame, Vec<Monster>){
     let mut map = MapGame{rows : Vec::new()};
 
     let mut row = Vec::new();
-    for _j in 0..11 as usize {
+    for _ in 0..11 {
         let _ = &mut row.push(
             String::from(
                 emoji::animals_and_nature::plant_other::DECIDUOUS_TREE
@@ -92,8 +100,9 @@ fn generate_static_object() -> (Player, MapGame, Vec<Monster>){
 
     //Generate mob in Vector
     let mut mob_vec: Vec<Monster> = Vec::new();
-    for _ in 0..3 {
+    for index in 0..3 {
         let mut monster = Monster{
+            id : index,
             hp :100, coords : (
                 rng.gen_range(0..10),
                 rng.gen_range(0..10)),
@@ -109,9 +118,9 @@ fn generate_static_object() -> (Player, MapGame, Vec<Monster>){
 }
 
 
-fn move_gg(vecmov :(usize, char), player: &mut Player, mob_vec: &Vec<Monster>){
+fn move_gg(vecmov :(usize, char), player: &mut Player, mob_vec: &mut Vec<Monster>){
 
-    let rus;
+    let mut rus = None;
     match vecmov.1 {
         'w' => rus = check_event(player, ('y', -1), &mob_vec),
         's' => rus = check_event(player, ('y', 1), &mob_vec),
@@ -119,6 +128,31 @@ fn move_gg(vecmov :(usize, char), player: &mut Player, mob_vec: &Vec<Monster>){
         'd' => rus = check_event(player, ('x', 1), &mob_vec),
         _ => println!("Неверное напрвление движения. Введите корректные: (w - вверх, s - вниз, a - влево, d - вправо)")
     }
+    match rus {
+        Some(event) => {
+            match event.0 {
+                //Тестовый билд (Можно отправлять mut ссылку на вектор монстров в поиск событий.
+                //                  При обнаружении события вызывался бы метод в структуре Монстр, который отнимал хп
+                //                  как у монстра, так и у игрока).
+            'f' => {
+                let mut iter_mob = mob_vec.clone();
+                for mut mob in &iter_mob{
+                    if mob.id == event.1 {
+                        let resu = mob_vec[mob.id as usize].loss_of_hp(20);
+                        println!(" Хп монтстра {}", mob.hp);
+                        if resu {
+                            mob_vec.remove(mob.id as usize);
+                        }
+                    }
+                }
+            },
+            _ => {}
+            }
+        },
+        None => {println!("Действия не было")},
+        _ => {}
+    }
+    println!("действие {:?}", rus);
 }
 
 fn render_game(player: &Player, map :&MapGame, mob_vec : &Vec<Monster>){
@@ -167,33 +201,38 @@ fn render_game(player: &Player, map :&MapGame, mob_vec : &Vec<Monster>){
 }
 
 
-fn check_event(player: &mut Player, move_coord :(char, i32), mobs_vec : &Vec<Monster>) -> Option<char>{
+fn check_event(player: &mut Player,
+               move_coord :(char, i32), mobs_vec : &Vec<Monster>) -> Option<(char, i32)>{
 
     let mut has_event = false;
 
     match move_coord.0 {
         'y' => {
-            for mob in mobs_vec{
-                if player.coords.1 + move_coord.1 == mob.coords.1 && player.coords.0 == mob.coords.0{
-                    println!("{} {}",player.coords.1 + move_coord.1,  mob.coords.1);
-                    has_event = true;
+            for mut mob in mobs_vec{
+                if (player.coords.1 + move_coord.1 == mob.coords.1)
+                    && (player.coords.0 == mob.coords.0) {
+                   // println!("Fight!");
+                    return Some(('f', mob.id)) //возвращает символ 'f' - fight
                 }
             }
             player.coords.1 += move_coord.1;
         },
         'x' => {
             for mob in mobs_vec{
-                if player.coords.0 + move_coord.1 == mob.coords.0 && player.coords.1 == mob.coords.1 {
-                    println!("{} {}",player.coords.0 + move_coord.1,  mob.coords.0);
-                    has_event = true;
+                if (player.coords.0 + move_coord.1 == mob.coords.0)
+                    && (player.coords.1 == mob.coords.1) {
+                   //println!("Fight!");
+                    return Some(('f', mob.id)) //возвращает символ 'f' - fight
                 }
             }
             player.coords.0 += move_coord.1;
         },
         _ => {}
     }
-    if has_event {
-        return Some('f') //возвращает символ 'f' - fight
-    }
     return None
 }
+
+
+//fn fight_with_mob(mob: &mut Monster, player: &mut Player) -> Option<char>{
+//
+//}
