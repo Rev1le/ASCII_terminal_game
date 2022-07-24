@@ -60,6 +60,10 @@ fn main() {
             Some(x) => move_gg(x, &mut player, &mut mob_vec), //Движение персонаджа по карте и регистрация событий
             None => println!("Введите команду!")
         }
+        if mob_vec.len() == 0 {
+            println!("Вы выирали!!!");
+            std::process::exit(1);
+        }
         render_game(&player, &map, &mob_vec);
     }
 }
