@@ -1,9 +1,10 @@
 use std::io;
+use std::env;
 //use std::ops::Range;
 use emoji;
 use rand::Rng;
 use terminal::Value::TerminalSize;
-//use try_catch::catch;
+
 
 
 //use std::io::Stdout;
@@ -22,6 +23,7 @@ pub struct InvItem{}
 pub struct MapGame { rows : Vec<Vec<String>> }
 
 #[derive(Clone)]
+#[derive(Debug)]
 pub struct Monster {
     id : i32,
     hp : i16,
@@ -35,6 +37,7 @@ impl Monster {
     fn loss_of_hp(&mut self, damage :i16) -> bool{
         self.hp -= damage;
         if self.hp <= 0 {
+            self.mob_is_alive = false;
             return true;
         }
         false
@@ -43,6 +46,8 @@ impl Monster {
 
 
 fn main() {
+
+    env::set_var("RUST_BACKTRACE", "1");
 
     let (mut player, mut map, mut mob_vec) = generate_static_object();
 
@@ -139,9 +144,12 @@ fn move_gg(vecmov :(usize, char), player: &mut Player, mob_vec: &mut Vec<Monster
                 //                  При обнаружении события вызывался бы метод в структуре Монстр, который отнимал хп
                 //                  как у монстра, так и у игрока).
             'f' => {
-                let mut iter_mob = mob_vec.clone();
-                for mut mob in &iter_mob{
+            /////////////////////////////////////////////////////////
+            /*
+                let iter_mob = mob_vec.clone();
+                for mob in &iter_mob{
                     if mob.id == event.1 {
+                        print!("{:?} {:?}",iter_mob, mob_vec);
                         let resu = mob_vec[mob.id as usize].loss_of_hp(20);
                         println!(" Хп монтстра {}", mob.hp);
                         if resu {
@@ -149,6 +157,34 @@ fn move_gg(vecmov :(usize, char), player: &mut Player, mob_vec: &mut Vec<Monster
                         }
                     }
                 }
+                */
+            /////////////////////////////////////////////////////////////
+            //let iter_mob = mob_vec.clone();
+                for mut mob in mob_vec.into_iter(){
+                    if mob.id == event.1 {
+                        mob.loss_of_hp(20);
+                        println!(" Хп монтстра {}", mob.hp);
+
+                        // mob.hp <= 0 {
+                        //mob_vec.remove(mob.id as usize);
+                    }
+                }
+
+                for mob_num in 0..mob_vec.len() {
+                    if mob_vec[mob_num].mob_is_alive == false {
+                        mob_vec.remove(mob_num);
+                        break;
+                        //println!("{:?}", mob_vec[mob_num]);
+                    }
+                }
+/*
+                let iter_mob = mob_vec.clone();
+                for mob in iter_mob {
+                    if mob.hp <= 0 {
+                        mob_vec.remove(mob.id as usize);
+                    }
+                }
+                */
             },
             _ => {}
             }
